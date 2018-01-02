@@ -1,6 +1,12 @@
-# Text Mining New York Times Corner Office Column
+# Lessons from CEO's: Analyzing the Text from the New York Times Corner Office Column in R
 
-One Paragraph of project description goes here
+This repo is an extension of a previous project found at . The goal of the previous project was to provide tools to social science researchers to extract topics from a small number of interview transcripts. I used transcripts from the New York Times Corner Office Column for test data. I was curious about what an analysis of all the New York Times Corner Office Column articles would look like. Thus, the inspiration from this project. Steps included:
+1. Using the NYT API to get the URL's for Corner Office articles
+2. Using these URL's to obtain the content of the articles (not available directly from the API)
+3. Cleaning the transcripts such that the interview questions were removed and each response was coded as an individual document
+4. Cleaning the text data
+5. Producing a word cloud of the most frequent words
+6. Using LDA to identify common topics
 
 ## Getting Started
 
