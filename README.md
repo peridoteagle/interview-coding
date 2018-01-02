@@ -1,7 +1,7 @@
 # Lessons from CEO's: Analyzing the Text from the New York Times Corner Office Column in R
 
 This repo is an extension of a previous project found at . The goal of the previous project was to provide tools to social science researchers to extract topics from a small number of interview transcripts. I used transcripts from the New York Times Corner Office Column for test data. I was curious about what an analysis of all the New York Times Corner Office Column articles would look like. Thus, the inspiration from this project. Steps included:
-1. Using the NYT API to get the URL's for Corner Office articles
+1. Using the NYT API to get the URL's for Corner Office articles (approximately 525 articles)
 2. Using these URL's to obtain the content of the articles (not available directly from the API)
 3. Cleaning the transcripts such that the interview questions were removed and each response was coded as an individual document
 4. Cleaning the text data
@@ -31,14 +31,28 @@ library(wordcloud2)
 Sys.setenv(NYTIMES_AS_KEY = "Insert your NYT API key here")
 ```
 
-### Installing
+### Obtaining URL's
 
-A step by step series of examples that tell you have to get a development env running
+I used #http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/ to help write this block of code. Note key limitations of the NYT Search API: the API returns information (including URLs) in groups of 10, there is a maximum of 1000 requests per day, and there must be 1 second between requests. 
 
-Say what the step will be
+The key variables in this for loop:
+1. (i in 0:53) tells the loop to start at Page 0 and go to Page 53. Each page produces 10 articles, so there are 540 total articles. Note that there are only 525 Corner Office interviews. However, one flaw with the API search is that you can only use it with relevant key terms (not a specific column) and some other articles were picked up in the search.
+2. Sys.sleep(1) allows the API to function
+3. The key terms "corner office" and "adam bryant were used to search the title, author, and text body
+4. The end date is 20171025 as that is the date of the last article
 
 ```
-Give the example
+urllist<-c()
+urls <- c()
+i=0
+for (i in 0:53){
+  Sys.sleep(1)
+  cornerarticles <- as_search(q="corner office adam bryant",end_date = '20171025',page=i)
+  urllist <- cornerarticles$data$web_url
+  print(length(urllist))
+  urls <- c(urls,urllist)
+}
+urls
 ```
 
 And repeat
