@@ -14,7 +14,7 @@ The following steps will allow you to replicate the analysis on your computer. A
 
 ### Prerequisites
 
-Please install the following R libraries:
+Before initiating this project, you will need to aquire a NYT API key https://developer.nytimes.com/signup and install the following R libraries:
 
 ```
 library(XML)
@@ -27,6 +27,8 @@ library(tidytext)
 library(dplyr)
 library(tibble)
 library(wordcloud2)
+
+Sys.setenv(NYTIMES_AS_KEY = "Insert your NYT API key here")
 ```
 
 ### Installing
