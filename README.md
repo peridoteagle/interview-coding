@@ -8,16 +8,25 @@ This repo is an extension of a previous project found at . The goal of the previ
 5. Producing a word cloud of the most frequent words
 6. Using LDA to identify common topics
 
-## Getting Started
+## Project Steps
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+The following steps will allow you to replicate the analysis on your computer. Alternatively, you can change the search terms in the NYT API to use this same analysis for different keywords.
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+Please install the following R libraries:
 
 ```
-Give examples
+library(XML)
+library(rtimes)
+library(stringr)
+library(tm)
+library(httr)
+library(topicmodels)
+library(tidytext)
+library(dplyr)
+library(tibble)
+library(wordcloud2)
 ```
 
 ### Installing
