@@ -1,12 +1,14 @@
 # Lessons from CEO's: Analyzing the Text from the New York Times Corner Office Column in R
 
 This repo is an extension of a previous project found at . The goal of the previous project was to provide tools to social science researchers to extract topics from a small number of interview transcripts. I used transcripts from the New York Times Corner Office Column for test data. I was curious about what an analysis of all the New York Times Corner Office Column articles would look like. Thus, the inspiration from this project. Steps included:
-1. Using the NYT API to get the URL's for Corner Office articles (approximately 525 articles)
+
+1. Using the NYT API to get the URL's for Corner Office articles (451 out of the 525 published articles)
 2. Using these URL's to obtain the content of the articles (not available directly from the API)
 3. Cleaning the transcripts such that the interview questions were removed and each response was coded as an individual document
 4. Cleaning the text data
 5. Producing a word cloud of the most frequent words
-6. Using LDA to identify common topics
+6. Using LDA to identify common topics and visualizing the topics in an interactive tree
+7. An R-Shiny app to display CEO quotes that include the most common word ('people')
 
 ## Project Steps
 
@@ -17,6 +19,7 @@ The following steps will allow you to replicate the analysis on your computer. A
 Before initiating this project, you will need to aquire a NYT API key https://developer.nytimes.com/signup and install the following R libraries:
 
 ```
+#Please load the following libraries
 library(XML)
 library(rtimes)
 library(stringr)
@@ -26,39 +29,62 @@ library(topicmodels)
 library(tidytext)
 library(dplyr)
 library(tibble)
+library(quanteda)
 library(wordcloud2)
+library(collapsibleTree)
+library(shiny)
+library(htmlwidgets)
 
-Sys.setenv(NYTIMES_AS_KEY = "Insert your NYT API key here")
+#Set the following NYT Key:
+Sys.setenv(NYTIMES_AS_KEY = "Your NYT Key")
 ```
 
-### Obtaining URL's
+### Obtaining Article Data
 
-I used #http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/ to help write this block of code. Note key limitations of the NYT Search API: the API returns information (including URLs) in groups of 10, there is a maximum of 1000 requests per day, and there must be 1 second between requests. 
+Data for all articles were obtained from the NYT Search API. Note key limitations of the NYT Search API: the API returns information (including URLs) in groups of 10, there is a maximum of 1000 requests per day, and there must be 1 second between requests. 
 
 The key variables in this for loop:
-1. (i in 0:53) tells the loop to start at Page 0 and go to Page 53. Each page produces 10 articles, so there are 540 total articles. Note that there are only 525 Corner Office interviews. However, one flaw with the API search is that you can only use it with relevant key terms (not a specific column) and some other articles were picked up in the search.
+1. (i in 0:73) tells the loop to start at Page 0 and go to Page 73. Each page produces data 10 articles, so there are 730 total articles. 73 was chosen as no other articles were produced in this search beyond Page 73; it should be modified for searches with different key words.
 2. Sys.sleep(1) allows the API to function
-3. The key terms "corner office" and "adam bryant were used to search the title, author, and text body
-4. The end date is 20171025 as that is the date of the last article
+3. The key terms "corner office" and "adam bryant" were used to search the title, author, and text body
+4. The start date 20090701 and end date 20171025 are the start and end dates for the column
 
 ```
 urllist<-c()
 urls <- c()
+mainhead <-c()
+headline <- c()
+subhead <- c()
+sublabel <- c()
+dpub <- c()
+datepub <- c()
 i=0
-for (i in 0:53){
+for (i in 0:73){
   Sys.sleep(1)
-  cornerarticles <- as_search(q="corner office adam bryant",end_date = '20171025',page=i)
+  cornerarticles <- as_search(q="corner office adam bryant",start_date ='20090701', end_date = '20171025',page=i)
   urllist <- cornerarticles$data$web_url
   print(length(urllist))
   urls <- c(urls,urllist)
+  mainhead <-cornerarticles$data$headline.main
+  headline <- c(headline,mainhead)
+  subhead <- cornerarticles$data$headline.kicker
+  sublabel <- c(sublabel,subhead)
+  dpub <- cornerarticles$data$pub_date
+  datepub <- c(datepub,dpub)
 }
-urls
 ```
 
-And repeat
+This search selects any article that includes these key words, including articles that are not actually in the Corner Office column. The following code limits the articles to only those published by Adam Bryant in the Corner Office column. Note that Adam Bryant wrote that he had completed 525 Corner Office Interviews, but only 451 came up through the search.
 
 ```
-until finished
+#Selecting only those articles from the Corner Office blog
+alldata <-  data.frame(urls,headline,sublabel,datepub)
+corneroffice <- subset(alldata,sublabel=="Corner Office")
+
+#Separating relevant information (namely URL, headline, and publication date)
+cornerofficeurls <- as.character(corneroffice$urls)
+cornerofficeheads <- as.character(corneroffice$headline)
+cornerofficedates <- as.character(corneroffice$datepub)
 ```
 
 End with an example of getting some data out of the system or using it for a little demo
@@ -113,6 +139,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* Hat tip to anyone who's code was used
+* http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/ for accessing NYT API
 * Inspiration
 * etc
