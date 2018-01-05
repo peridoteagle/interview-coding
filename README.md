@@ -41,13 +41,16 @@ Sys.setenv(NYTIMES_AS_KEY = "Your NYT Key")
 
 ### Obtaining Article Data
 
-Data for all articles were obtained from the NYT Search API. Note key limitations of the NYT Search API: the API returns information (including URLs) in groups of 10, there is a maximum of 1000 requests per day, and there must be 1 second between requests. 
+Data for all articles were obtained from the NYT Search API. Note key limitations of the NYT Search API: 
+* The API returns information (including URLs) in groups of 10
+* Maximum of 1000 requests per day 
+* Must be 1 second between requests. 
 
-The key variables in this for loop:
+The key variables in this loop:
 1. (i in 0:73) tells the loop to start at Page 0 and go to Page 73. Each page produces data 10 articles, so there are 730 total articles. 73 was chosen as no other articles were produced in this search beyond Page 73; it should be modified for searches with different key words.
 2. Sys.sleep(1) allows the API to function
 3. The key terms "corner office" and "adam bryant" were used to search the title, author, and text body
-4. The start date 20090701 and end date 20171025 are the start and end dates for the column
+4. The '20090701' and '20171025' are the start and end dates respectively for the Corner Office column
 
 ```
 urllist<-c()
@@ -80,14 +83,16 @@ This search selects any article that includes these key words, including article
 #Selecting only those articles from the Corner Office blog
 alldata <-  data.frame(urls,headline,sublabel,datepub)
 corneroffice <- subset(alldata,sublabel=="Corner Office")
+```
 
+To separate the urls, headlines, and publication dates, run the following:
+
+```
 #Separating relevant information (namely URL, headline, and publication date)
 cornerofficeurls <- as.character(corneroffice$urls)
 cornerofficeheads <- as.character(corneroffice$headline)
 cornerofficedates <- as.character(corneroffice$datepub)
 ```
-
-End with an example of getting some data out of the system or using it for a little demo
 
 ## Running the tests
 
