@@ -1,6 +1,3 @@
-#Source
-#http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/
-
 #Please load the following libraries
 library(XML)
 library(rtimes)
