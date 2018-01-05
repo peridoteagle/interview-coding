@@ -47,12 +47,12 @@ for (i in 0:73){
 
 #Selecting only those articles from the Corner Office blog
 alldata <-  data.frame(urls,headline,sublabel,datepub)
-corneroffice <- subset(alldata,sublabel=="Corner Office")
+relevantarticles <- subset(alldata,sublabel=="Corner Office")
 
 #Separating relevant information (namely URL, headline, and publication date)
-cornerofficeurls <- as.character(corneroffice$urls)
-cornerofficeheads <- as.character(corneroffice$headline)
-cornerofficedates <- as.character(corneroffice$datepub)
+relevanturls <- as.character(relevantarticles$urls)
+relevantheads <- as.character(relevantarticles$headline)
+relevantdates <- as.character(relevantarticles$datepub)
 
 #Defining function to parse URL for article body
 parseArticleBody <- function(artHTML) {
@@ -74,8 +74,8 @@ parseArticleBody <- function(artHTML) {
 #Substitutes headline and date information at the end of every bold line so that it is attached to each answer
 articletext1 <- c()
 j=1
-for (j in 1:length(cornerofficeurls)){
-  p <- GET(cornerofficeurls[j])
+for (j in 1:length(relevanturls)){
+  p <- GET(relevanturls[j])
   html <- content(p, 'text')
   newtry <- str_replace_all(html,"[<]strong[>]"," BOLD ADAMBRYANT ")
   newtry <- str_replace_all(newtry,"[<][/]strong[>]","BOLD HEZDLINE ")
@@ -84,7 +84,7 @@ for (j in 1:length(cornerofficeurls)){
   artBody <- str_replace_all(artBody,"â\u0080\u009c","'")
   artBody <- str_replace_all(artBody,"â\u0080\u009d","'")
   artBody <- str_replace_all(artBody,"â\u0080\u0094",",")
-  articleinfo<- paste("(",substring(cornerofficedates[j],1,10),": ",cornerofficeheads[j]," [",cornerofficeurls[j],"]",")",sep="")
+  articleinfo<- paste("(",substring(relevantdates[j],1,10),": ",relevantheads[j]," [",relevanturls[j],"]",")",sep="")
   artBody <- str_replace_all(artBody,"HEZDLINE",articleinfo)
   test <- strsplit(artBody,split="BOLD")
   articletext1 <- c(articletext1,test)
