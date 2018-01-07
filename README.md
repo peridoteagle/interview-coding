@@ -349,7 +349,9 @@ saveWidget(cTree,file="ctreecorneroffice.html")
 * Topic 27 (famili, work, front) may be about the relationship of family and work
 * Topic 33 (idea, meet, creativ) may be about coming up with creative ideas at meetings
 
-See all the topics here: file:///Users/emilyhadley/ctreecorneroffice.html
+A screenshot is below. See all the topics here: [linked phrase](file:///Users/emilyhadley/ctreecorneroffice.html)
+
+![Alt text](https://github.com/peridoteagle/want-to-be-a-ceo/issues/2)
 
 ### Documents Related to a Specific Topic
 
@@ -406,6 +408,9 @@ shinyApp(
   }
 )
 ```
+A screenshot of the application is below. The full interactive application can be accessed here 
+
+![Alt text](https://github.com/peridoteagle/want-to-be-a-ceo/issues/3)
 
 ## Acknowledgments
 
