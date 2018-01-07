@@ -351,7 +351,7 @@ saveWidget(cTree,file="ctreecorneroffice.html")
 
 A screenshot is below. See all the topics here: [linked phrase](file:///Users/emilyhadley/ctreecorneroffice.html)
 
-![Alt text](https://github.com/peridoteagle/want-to-be-a-ceo/issues/2)
+![Alt text](https://user-images.githubusercontent.com/34693652/34654324-3a9b508e-f3c8-11e7-8401-36dd2e418312.png)
 
 ### Documents Related to a Specific Topic
 
@@ -410,7 +410,7 @@ shinyApp(
 ```
 A screenshot of the application is below. The full interactive application can be accessed here 
 
-![Alt text](https://github.com/peridoteagle/want-to-be-a-ceo/issues/3)
+![Alt text](https://user-images.githubusercontent.com/34693652/34654396-0677f09a-f3c9-11e7-87df-bb31004705a8.png)
 
 ## Acknowledgments
 
