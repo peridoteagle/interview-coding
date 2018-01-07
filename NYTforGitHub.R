@@ -10,46 +10,72 @@ library(dplyr)
 library(tibble)
 library(quanteda)
 library(wordcloud2)
+library(ldatuning)
 library(collapsibleTree)
 library(shiny)
 library(htmlwidgets)
 
 #Set the following NYT Key:
-Sys.setenv(NYTIMES_AS_KEY = "Your NYT Key")
+Sys.setenv(NYTIMES_AS_KEY = "Your NYT API Key")
 
 #Obtaining articles from the NYT Search API
-#Search terms and start and end date can be adjusted
+#Search terms, start and end dates, and number of articles can be adjusted
+keywords <- "corner office adam bryant"
+startdate <- '20090701'
+enddate <- '20171025'
+#n is number of desired articles
+n <- 730
+nover10 <- ceiling(n/10)
+
 urllist<-c()
 urls <- c()
-mainhead <-c()
+headlabel <-c()
 headline <- c()
-subhead <- c()
-sublabel <- c()
-dpub <- c()
+kicklabel <- c()
+kicker <- c()
+seclabel <- c()
+section <- c()
+dpublabel <- c()
 datepub <- c()
+newslabel <- c()
+newsdesk <- c()
+typelabel <-c()
+typematerial <- c()
+bylinelabel <- c()
+byline <- c()
 i=0
-for (i in 0:73){
+for (i in 0:nover10){
   Sys.sleep(1)
-  cornerarticles <- as_search(q="corner office adam bryant",start_date ='20090701', end_date = '20171025',page=i)
-  urllist <- cornerarticles$data$web_url
+  tenarticles <- as_search(q=keywords,start_date =startdate, end_date = enddate,page=i)
+  urllist <- tenarticles$data$web_url
   print(length(urllist))
   urls <- c(urls,urllist)
-  mainhead <-cornerarticles$data$headline.main
-  headline <- c(headline,mainhead)
-  subhead <- cornerarticles$data$headline.kicker
-  sublabel <- c(sublabel,subhead)
-  dpub <- cornerarticles$data$pub_date
-  datepub <- c(datepub,dpub)
+  headlabel <-tenarticles$data$headline.main
+  headline <- c(headline,headlabel)
+  kicklabel <- tenarticles$data$headline.kicker
+  kicker <- c(kicker,kicklabel)
+  seclabel <- tenarticles$data$section_name
+  section <- c(section,seclabel)
+  bylinelabel <- tenarticles$data$byline.original
+  byline <- c(byline,bylinelabel)
+  dpublabel <- tenarticles$data$pub_date
+  datepub <- c(datepub,dpublabel)
+  newslabel <- tenarticles$data$new_desk
+  newsdesk <- c(newsdesk,newslabel)
+  typelabel <- tenarticles$data$type_of_material
+  typematerial <- c(typematerial,typelabel)
 }
 
 #Selecting only those articles from the Corner Office blog
-alldata <-  data.frame(urls,headline,sublabel,datepub)
-relevantarticles <- subset(alldata,sublabel=="Corner Office")
+alldata <-  data.frame(urls,headline,kicker,datepub)
+relevantarticles <- subset(alldata,kicker=="Corner Office")
 
-#Separating relevant information (namely URL, headline, and publication date)
+#Separating relevant information for this analysis (namely URL, headline, and publication date)
 relevanturls <- as.character(relevantarticles$urls)
 relevantheads <- as.character(relevantarticles$headline)
 relevantdates <- as.character(relevantarticles$datepub)
+
+narticles <- length(relevanturls)
 
 #Defining function to parse URL for article body
 parseArticleBody <- function(artHTML) {
@@ -64,14 +90,43 @@ parseArticleBody <- function(artHTML) {
   return(bodyi)
 }
 
+#Loop to extract articles from every relevant URL
+#Also separates out bold text (which demarks Adam's questions)
+#Replaces specific symbols
+#This output is used in term frequency and LDA
+articletext1 <- c()
+j=1
+for (j in 1:narticles){
+  p <- GET(relevanturls[j])
+  html <- content(p, 'text')
+  newtry <- str_replace_all(html,"[<]strong[>]"," BOLD ADAMBRYANT ")
+  newtry <- str_replace_all(newtry,"[<][/]strong[>]","BOLD ")
+  artBody <- parseArticleBody(newtry)
+  artBody <- str_replace_all(artBody,"â\u0080\u0099","'")
+  artBody <- str_replace_all(artBody,"â\u0080\u009c","'")
+  artBody <- str_replace_all(artBody,"â\u0080\u009d","'")
+  artBody <- str_replace_all(artBody,"â\u0080\u0094",",")
+  test <- strsplit(artBody,split="BOLD")
+  articletext1 <- c(articletext1,test)
+}
+
+attempt1 <- unlist(articletext1)
+
+#The following code separates the interviewer questions from the response questions for all respondents
+corp1 <- VCorpus(VectorSource(attempt1))
+textVector1 <- sapply(corp1, as.character)
+newCorp1 <- Corpus(VectorSource(textVector1[-grep("ADAMBRYANT", textVector1, 
+                                                  ignore.case = TRUE)]))
+docs <- newCorp1
 
 #Loop to extract articles from every relevant URL
 #Also separates out bold text (which demarks Adam's questions)
 #Replaces specific symbols
 #Substitutes headline and date information at the end of every bold line so that it is attached to each answer
-articletext1 <- c()
+#This is used in the Shiny App
+articletext2 <- c()
 j=1
-for (j in 1:length(relevanturls)){
+for (j in 1:narticles){
   p <- GET(relevanturls[j])
   html <- content(p, 'text')
   newtry <- str_replace_all(html,"[<]strong[>]"," BOLD ADAMBRYANT ")
@@ -84,44 +139,18 @@ for (j in 1:length(relevanturls)){
   articleinfo<- paste("(",substring(relevantdates[j],1,10),": ",relevantheads[j]," [",relevanturls[j],"]",")",sep="")
   artBody <- str_replace_all(artBody,"HEZDLINE",articleinfo)
   test <- strsplit(artBody,split="BOLD")
-  articletext1 <- c(articletext1,test)
-}
-
-attempt1 <- unlist(articletext1)
-
-#The following code separates the interviewer questions (ADAMBRYANT) from the response questions for all respondents
-corp1 <- VCorpus(VectorSource(attempt1))
-textVector1 <- sapply(corp1, as.character)
-newCorp1 <- Corpus(VectorSource(textVector1[-grep("ADAMBRYANT", textVector1, 
-                                                  ignore.case = TRUE)]))
-docswithheadlines <- newCorp1
-
-#The following loop repeats above, but does NOT attach headline and date info to each response
-#This output is used in term frequency and LDA
-articletext2 <- c()
-j=1
-for (j in 1:540){
-  p <- GET(cornerofficeurls[j])
-  html <- content(p, 'text')
-  newtry <- str_replace_all(html,"[<]strong[>]"," BOLD ADAMBRYANT ")
-  newtry <- str_replace_all(newtry,"[<][/]strong[>]","BOLD ")
-  artBody <- parseArticleBody(newtry)
-  artBody <- str_replace_all(artBody,"â\u0080\u0099","'")
-  artBody <- str_replace_all(artBody,"â\u0080\u009c","'")
-  artBody <- str_replace_all(artBody,"â\u0080\u009d","'")
-  artBody <- str_replace_all(artBody,"â\u0080\u0094",",")
-  test <- strsplit(artBody,split="BOLD")
   articletext2 <- c(articletext2,test)
 }
 
 attempt2 <- unlist(articletext2)
 
-#The following code separates the interviewer questions from the response questions for all respondents
+#The following code separates the interviewer questions (ADAMBRYANT) from the response questions for all respondents
 corp2 <- VCorpus(VectorSource(attempt2))
 textVector2 <- sapply(corp2, as.character)
 newCorp2 <- Corpus(VectorSource(textVector2[-grep("ADAMBRYANT", textVector2, 
                                                   ignore.case = TRUE)]))
-docs <- newCorp2
+docswithheadlines <- newCorp2
+
 
 #Convert symbols to spaces
 toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
@@ -169,15 +198,7 @@ d2 <- data.frame(word = names(v2),freq=v2)
 head(d2, 10)
 #Wordcloud of these words
 wordcloud <- wordcloud2(d2)
-
-saveWidget(wordcloud,file="wordcloud.html")
-
-#Term-document matrix for most frequent words:
-tdm <- TermDocumentMatrix(docs)
-#Counting the Top 10 most frequent words
-m <- as.matrix(tdm)
-v <- sort(rowSums(m),decreasing=TRUE)
-d <- data.frame(word = names(v),freq=v)
+wordcloud
 
 ################ LDA FOR TOPIC ANALYSIS ######################
 
@@ -221,7 +242,27 @@ cTree<-collapsibleTree(
   hierarchy = c("topic", "term"),
   width = 500, height = 500, zoomable = FALSE, tooltip = TRUE
 )
+cTree
 saveWidget(cTree,file="ctree.html")
+
+#Seeing which documents are most closely related to a specific topic
+ap_documents <- tidy(ap_lda2, matrix = "gamma")
+
+top_docs <- ap_documents %>%
+  group_by(topic) %>%
+  top_n(3, gamma) %>%
+  ungroup() %>%
+  arrange(topic, -gamma)
+
+top_docs
+#Example interpretation: Doc 1349 is most closely related to topic 27
+#What is Doc 1349?
+#Doc 1034 in the cleaned data:
+docs[[1349]]$content
+#Doc 1034 in the original data:
+newCorp1[[1349]]$content
+#Doc 1034 with Date/Headline/URL:
+newCorp2[[1349]]$content
 
 ############################################################
 # Investigation into the most common word (people)
@@ -233,25 +274,5 @@ people <- Corpus(VectorSource(textVector3[grep("people", textVector3)]))
 
 #Creating a R-Shiny app
 
-shinyApp(
-  ui = fluidPage(
-    titlePanel("It's All About People"),
-    verbatimTextOutput("text1"),
-    actionButton("button1", "Show Me a Quote!"),
-    verbatimTextOutput("text2")),
-  
-  server = function(input, output, session) {
-    
-    output$text1 <- renderText({
-      session$userData$text1 <- "CEO Quotes that Include the Word 'People'"
-      session$userData$text1})
-    output$text2 <- renderText("Press the button to begin...")
-    
-    observeEvent(input$button1, {
-      llll<-as.character(sample(people,1))
-      llll <- str_replace_all(llll,"people","PEOPLE")
-      output$text2 <- renderText(llll[1])
-    })
-  }
-)
+
 
