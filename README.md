@@ -16,7 +16,7 @@ The Corner Office articles are edited interview transcripts with questions by th
 
 ## Project Steps
 
-The following steps will allow you to replicate the analysis on your computer. Alternatively, you could use a similar analysis for different keywords. An example of this is 
+The following steps will allow you to replicate the analysis on your computer. Alternatively, you could use a similar analysis for different keywords. An example of this is https://github.com/peridoteagle/fun-with-nyt-search-api
 
 ### Prerequisites
 
@@ -52,18 +52,19 @@ Data for all articles were obtained from the NYT Search API. Note key limitation
 * Must be 1 second between requests. 
 
 The key variables to obtain the articles:
-1. The key terms "corner office" and "adam bryant" were used to search the title, author, and text body. These terms can be modified, as shown in:
+1. The key terms "corner office" and "adam bryant" were used to search the title, author, and text body. These terms can be modified, as shown in https://github.com/peridoteagle/fun-with-nyt-search-api
 2. The '20090701' and '20171025' are the start and end dates respectively for articles collected from the Corner Office column
 3. To get n, I used trial and error to determine that approximately 730 articles were returned with the search terms in from the 'keywords' variable
 
 ```
+#Obtaining articles from the NYT Search API
 #Search terms, start and end dates, and number of articles can be adjusted
 keywords <- "corner office adam bryant"
 startdate <- '20090701'
 enddate <- '20171025'
 #n is number of desired articles
 n <- 730
-#The following divides n by 10 and rounds up for use in a later for loop
+#nover10 divides n by 10 and rounds up; for use in later for loop
 nover10 <- ceiling(n/10)
 ```
 
@@ -114,17 +115,19 @@ This search selects any article that includes these key words, including article
 
 ```
 #Selecting only those articles from the Corner Office blog
-alldata <-  data.frame(urls,headline,sublabel,datepub)
-corneroffice <- subset(alldata,sublabel=="Corner Office")
+alldata <-  data.frame(urls,headline,kicker,datepub)
+relevantarticles <- subset(alldata,kicker=="Corner Office")
 ```
 
 The urls, headlines, and publication dates are used to label each document. To separate the urls, headlines, and publication dates, run the following:
 
 ```
-#Separating relevant information (namely URL, headline, and publication date)
-cornerofficeurls <- as.character(corneroffice$urls)
-cornerofficeheads <- as.character(corneroffice$headline)
-cornerofficedates <- as.character(corneroffice$datepub)
+#Separating relevant information for this analysis (namely URL, headline, and publication date)
+relevanturls <- as.character(relevantarticles$urls)
+relevantheads <- as.character(relevantarticles$headline)
+relevantdates <- as.character(relevantarticles$datepub)
+
+narticles <- length(relevanturls)
 ```
 
 ### Parsing the Articles for Term Frequency and Topic Analysis
@@ -155,9 +158,9 @@ The following loop accomplishes these tasks:
 After the loop, the code removes all statements by Adam Bryant (the reporter).
 
 ```
-articletext2 <- c()
+articletext1 <- c()
 j=1
-for (j in 1:length(relevanturls)){
+for (j in 1:narticles){
   p <- GET(relevanturls[j])
   html <- content(p, 'text')
   newtry <- str_replace_all(html,"[<]strong[>]"," BOLD ADAMBRYANT ")
@@ -168,17 +171,17 @@ for (j in 1:length(relevanturls)){
   artBody <- str_replace_all(artBody,"â\u0080\u009d","'")
   artBody <- str_replace_all(artBody,"â\u0080\u0094",",")
   test <- strsplit(artBody,split="BOLD")
-  articletext2 <- c(articletext2,test)
+  articletext1 <- c(articletext1,test)
 }
 
-attempt2 <- unlist(articletext2)
+attempt1 <- unlist(articletext1)
 
 #The following code separates the interviewer questions from the response questions for all respondents
-corp2 <- VCorpus(VectorSource(attempt2))
-textVector2 <- sapply(corp2, as.character)
-newCorp2 <- Corpus(VectorSource(textVector2[-grep("ADAMBRYANT", textVector2, 
+corp1 <- VCorpus(VectorSource(attempt1))
+textVector1 <- sapply(corp1, as.character)
+newCorp1 <- Corpus(VectorSource(textVector1[-grep("ADAMBRYANT", textVector1, 
                                                   ignore.case = TRUE)]))
-docs <- newCorp2
+docs <- newCorp1
 ```
 
 ### Parsing the Articles for Shiny App
@@ -196,9 +199,9 @@ This loop does the following tasks:
 After the loop, the code separates the output into documents and removes all questions asked by Adam Bryant (the reporter).
 
 ```
-articletext1 <- c()
+articletext2 <- c()
 j=1
-for (j in 1:length(relevanturls)){
+for (j in 1:narticles){
   p <- GET(relevanturls[j])
   html <- content(p, 'text')
   newtry <- str_replace_all(html,"[<]strong[>]"," BOLD ADAMBRYANT ")
@@ -211,15 +214,17 @@ for (j in 1:length(relevanturls)){
   articleinfo<- paste("(",substring(relevantdates[j],1,10),": ",relevantheads[j]," [",relevanturls[j],"]",")",sep="")
   artBody <- str_replace_all(artBody,"HEZDLINE",articleinfo)
   test <- strsplit(artBody,split="BOLD")
-  articletext1 <- c(articletext1,test)
+  articletext2 <- c(articletext2,test)
 }
-attempt1 <- unlist(articletext1)
+
+attempt2 <- unlist(articletext2)
+
 #The following code separates the interviewer questions (ADAMBRYANT) from the response questions for all respondents
-corp1 <- VCorpus(VectorSource(attempt1))
-textVector1 <- sapply(corp1, as.character)
-newCorp1 <- Corpus(VectorSource(textVector1[-grep("ADAMBRYANT", textVector1, 
+corp2 <- VCorpus(VectorSource(attempt2))
+textVector2 <- sapply(corp2, as.character)
+newCorp2 <- Corpus(VectorSource(textVector2[-grep("ADAMBRYANT", textVector2, 
                                                   ignore.case = TRUE)]))
-docswithheadlines <- newCorp1
+docswithheadlines <- newCorp2
 ```
 
 ## Data Cleaning
@@ -280,6 +285,7 @@ d2 <- data.frame(word = names(v2),freq=v2)
 head(d2, 10)
 #Wordcloud of these words
 wordcloud <- wordcloud2(d2)
+wordcloud
 ```
 
 ## LDA and Visualization of Topics
@@ -294,7 +300,8 @@ docterm <- DocumentTermMatrix(docs)
 rowTotals <- apply(docterm , 1, sum) #Find the sum of words in each Document
 ttdm.new   <- docterm[rowTotals> 0, ] 
 
-#Finding the number of topics for LDA
+#The following code helps select the number of topics for LDA
+#Note that it can take awhile to run
 result <- FindTopicsNumber(
   ttdm.new,
   topics = seq(from = 2, to = 62, by = 10),
@@ -305,7 +312,11 @@ result <- FindTopicsNumber(
   verbose = TRUE
 )
 FindTopicsNumber_plot(result)
-#In this example, choose 40 topics
+#Choosing 40 topics
+
+#Applying LDA to the documents
+ap_lda2 <- LDA(ttdm.new, k = 40, control = list(seed = 1234))
+chapter_topics <- tidy(ap_lda2, matrix = "beta")
 
 #Applying LDA to the documents
 ap_lda2 <- LDA(ttdm.new, k = 40, control = list(seed = 1234))
@@ -328,7 +339,8 @@ cTree<-collapsibleTree(
   hierarchy = c("topic", "term"),
   width = 500, height = 500, zoomable = FALSE, tooltip = TRUE
 )
-saveWidget(cTree,file="ctree.html")
+cTree
+saveWidget(cTree,file="ctreecorneroffice.html")
 ```
 
 40 topics were selected. There is some overlap between the topics. Three example topics include:
@@ -346,17 +358,19 @@ ap_documents <- tidy(ap_lda2, matrix = "gamma")
 
 top_docs <- ap_documents %>%
   group_by(topic) %>%
-  top_n(2, gamma) %>%
+  top_n(3, gamma) %>%
   ungroup() %>%
   arrange(topic, -gamma)
 
 top_docs
-#Example interpretation: Doc 68 is most closely related to topic 1
-#What is Doc 68?
-#Doc 68 in the cleaned data:
-docs[[8113]]$content
-#Doc 68 in the original data:
-newCorp[[7881]]$content
+#Example interpretation: Doc 1349 is most closely related to topic 27
+#What is Doc 1349?
+#Doc 1034 in the cleaned data:
+docs[[1349]]$content
+#Doc 1034 in the original data:
+newCorp1[[1349]]$content
+#Doc 1034 with Date/Headline/URL:
+newCorp2[[1349]]$content
 ```
 For example, the document most closely associated with Topic 27 reads:
 *(2015-09-20: Jonathan M. Tisch: Beware of the Thin Air at the Top [https://www.nytimes.com/2015/09/20/business/jonathan-m-tisch-beware-of-the-thin-air-at-the-top.html])  I was fortunate to have grown up as a young kid in the hotel business watching my father, Bob Tisch, and my uncle, Larry Tisch, create what is today the Loews Corporation. I have a recollection of being 5 years old, standing at the front door of the Traymore Hotel, greeting President Eisenhower. I was given instructions that I first salute him because he was a general, and then I shake his hand. I was so nervous I did them both at the same time.My cousins, my siblings and I were fully indoctrinated into the hotel business as children. In 1957, my father and uncle opened the Americana of Bal Harbour, and we would often go there on vacation. If I was bored, I would go behind the front desk at 7 years old. I would go into the kitchen. I would go into the laundry. I had free rein to walk around the property, and I took full advantage of that.My first paying job in the industry started when I was 15 years old, and I worked at the former Americana on Seventh Avenue in New York, a big hotel that my family built. I worked behind the front desk, and I used my middle name as my last name so that nobody knew that I was a member of the family that controlled Loews Hotels and the Loews Corporation.It said 'Jonathan Mark' on my name badge. On nights when the hotel was sold out, somebody might walk up and say, 'I have a reservation,' and I'd check. If they didn't have one, I'd say, 'No, sorry, there's no reservation.' Then they'd say, 'Well, I'm going to call the Tisch brothers. I know them very well. I know all three Tisch brothers.'Now, my father's name was Preston Robert and my uncle is Larry. So in one particular case, an individual thought that there were three Tisch brothers. He was going to call Preston, Robert or Larry. So I knew right away that he didn't know our family. "
