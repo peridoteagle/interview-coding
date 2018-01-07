@@ -35,48 +35,78 @@ library(dplyr)
 library(tibble)
 library(quanteda)
 library(wordcloud2)
+library(ldatuning)
 library(collapsibleTree)
 library(shiny)
 library(htmlwidgets)
 
 #Set the following NYT Key:
-Sys.setenv(NYTIMES_AS_KEY = "Your NYT Key")
+Sys.setenv(NYTIMES_AS_KEY = "Your NYT API Key")
 ```
 
-### Obtaining Article Data
+## Obtaining Article Data
 
 Data for all articles were obtained from the NYT Search API. Note key limitations of the NYT Search API: 
 * The API returns information (including URLs) in groups of 10
-* Maximum of 1000 requests per day 
+* Maximum of 1000 requests per day (10,000 articles total)
 * Must be 1 second between requests. 
 
-The key variables in this loop:
-1. (i in 0:73) tells the loop to start at Page 0 and go to Page 73. Each page produces data 10 articles, so there are 730 total articles. 73 was chosen as no other articles were produced in this search beyond Page 73. This number should be modified for searches with different key words.
-2. The key terms "corner office" and "adam bryant" were used to search the title, author, and text body. These terms can be modified, as shown in:
-3. The '20090701' and '20171025' are the start and end dates respectively for the Corner Office column
+The key variables to obtain the articles:
+1. The key terms "corner office" and "adam bryant" were used to search the title, author, and text body. These terms can be modified, as shown in:
+2. The '20090701' and '20171025' are the start and end dates respectively for articles collected from the Corner Office column
+3. To get n, I used trial and error to determine that approximately 730 articles were returned with the search terms in from the 'keywords' variable
+
+```
+#Search terms, start and end dates, and number of articles can be adjusted
+keywords <- "corner office adam bryant"
+startdate <- '20090701'
+enddate <- '20171025'
+#n is number of desired articles
+n <- 730
+#The following divides n by 10 and rounds up for use in a later for loop
+nover10 <- ceiling(n/10)
+```
+
+The loop below gets the following information for the articles: url, headline, kicker, section, publication date, news desk, the type of material, and the byline. Note that more information is available from the API. When information is missing, it is reported as NA.
 
 ```
 urllist<-c()
 urls <- c()
-mainhead <-c()
+headlabel <-c()
 headline <- c()
-subhead <- c()
-sublabel <- c()
-dpub <- c()
+kicklabel <- c()
+kicker <- c()
+seclabel <- c()
+section <- c()
+dpublabel <- c()
 datepub <- c()
+newslabel <- c()
+newsdesk <- c()
+typelabel <-c()
+typematerial <- c()
+bylinelabel <- c()
+byline <- c()
 i=0
-for (i in 0:73){
+for (i in 0:nover10){
   Sys.sleep(1)
-  cornerarticles <- as_search(q="corner office adam bryant",start_date ='20090701', end_date = '20171025',page=i)
-  urllist <- cornerarticles$data$web_url
+  tenarticles <- as_search(q=keywords,start_date =startdate, end_date = enddate,page=i)
+  urllist <- tenarticles$data$web_url
   print(length(urllist))
   urls <- c(urls,urllist)
-  mainhead <-cornerarticles$data$headline.main
-  headline <- c(headline,mainhead)
-  subhead <- cornerarticles$data$headline.kicker
-  sublabel <- c(sublabel,subhead)
-  dpub <- cornerarticles$data$pub_date
-  datepub <- c(datepub,dpub)
+  headlabel <-tenarticles$data$headline.main
+  headline <- c(headline,headlabel)
+  kicklabel <- tenarticles$data$headline.kicker
+  kicker <- c(kicker,kicklabel)
+  seclabel <- tenarticles$data$section_name
+  section <- c(section,seclabel)
+  bylinelabel <- tenarticles$data$byline.original
+  byline <- c(byline,bylinelabel)
+  dpublabel <- tenarticles$data$pub_date
+  datepub <- c(datepub,dpublabel)
+  newslabel <- tenarticles$data$new_desk
+  newsdesk <- c(newsdesk,newslabel)
+  typelabel <- tenarticles$data$type_of_material
+  typematerial <- c(typematerial,typelabel)
 }
 ```
 
@@ -97,7 +127,7 @@ cornerofficeheads <- as.character(corneroffice$headline)
 cornerofficedates <- as.character(corneroffice$datepub)
 ```
 
-## Parsing the Articles for Term Frequency and Topic Analysis
+### Parsing the Articles for Term Frequency and Topic Analysis
 
 First, define the function to parse the body of the article from the html files.
 
@@ -120,7 +150,7 @@ The following loop accomplishes these tasks:
 2. Separates out bold text as a bold line represents a question while a non-bold line represents an answer
 3. Parses the HTML file
 4. Replaces specific symbols in the text from reading the html file
-5. Breaks into individual documents where each document is a question or answer; all question lines should start with BOLD ADAMBRYANT and end with BOLD
+5. Breaks into individual documents where each document is a question or answer by splitting on the bold lines; all question lines should start with BOLD ADAMBRYANT and end with BOLD
 
 After the loop, the code removes all statements by Adam Bryant (the reporter).
 
@@ -151,7 +181,7 @@ newCorp2 <- Corpus(VectorSource(textVector2[-grep("ADAMBRYANT", textVector2,
 docs <- newCorp2
 ```
 
-## Parsing the Articles for Shiny App
+### Parsing the Articles for Shiny App
 
 The Shiny App needs each individual answer to include the date, headline, and url so that the reader knows which article the snippet came from. This information cannot be included in the previous parsing as it skews the topic analysis.
 
@@ -192,7 +222,7 @@ newCorp1 <- Corpus(VectorSource(textVector1[-grep("ADAMBRYANT", textVector1,
 docswithheadlines <- newCorp1
 ```
 
-### Data Cleaning
+## Data Cleaning
 
 The following code cleans the text data:
 
@@ -236,7 +266,7 @@ docsnostem <-docs
 docs <- tm_map(docs, stemDocument)
 ```
 
-### Term Frequency and Word Cloud
+## Term Frequency and Word Cloud
 
 This produces an interactive wordcloud of the most frequent words (not stemmed).
 
@@ -302,9 +332,11 @@ saveWidget(cTree,file="ctree.html")
 ```
 
 40 topics were selected. There is some overlap between the topics. Three example topics include:
-* Topic 5 (call, email, come) may be about communication
-* Topic 29 (idea,peopl,creativ) may be about creativity and coming up with ideas
-* Topic 33 (think,manag,company) may be about what it takes to run a company
+* Topic 7 (school, college, money) may be about the importance of investing in education
+* Topic 27 (famili, work, front) may be about the relationship of family and work
+* Topic 33 (idea, meet, creativ) may be about coming up with creative ideas at meetings
+
+### Documents Related to a Specific Topic
 
 To see the Top 2 documents related to each topic: 
 
@@ -326,6 +358,10 @@ docs[[8113]]$content
 #Doc 68 in the original data:
 newCorp[[7881]]$content
 ```
+For example, the document most closely associated with Topic 27 reads:
+*(2015-09-20: Jonathan M. Tisch: Beware of the Thin Air at the Top [https://www.nytimes.com/2015/09/20/business/jonathan-m-tisch-beware-of-the-thin-air-at-the-top.html])  I was fortunate to have grown up as a young kid in the hotel business watching my father, Bob Tisch, and my uncle, Larry Tisch, create what is today the Loews Corporation. I have a recollection of being 5 years old, standing at the front door of the Traymore Hotel, greeting President Eisenhower. I was given instructions that I first salute him because he was a general, and then I shake his hand. I was so nervous I did them both at the same time.My cousins, my siblings and I were fully indoctrinated into the hotel business as children. In 1957, my father and uncle opened the Americana of Bal Harbour, and we would often go there on vacation. If I was bored, I would go behind the front desk at 7 years old. I would go into the kitchen. I would go into the laundry. I had free rein to walk around the property, and I took full advantage of that.My first paying job in the industry started when I was 15 years old, and I worked at the former Americana on Seventh Avenue in New York, a big hotel that my family built. I worked behind the front desk, and I used my middle name as my last name so that nobody knew that I was a member of the family that controlled Loews Hotels and the Loews Corporation.It said 'Jonathan Mark' on my name badge. On nights when the hotel was sold out, somebody might walk up and say, 'I have a reservation,' and I'd check. If they didn't have one, I'd say, 'No, sorry, there's no reservation.' Then they'd say, 'Well, I'm going to call the Tisch brothers. I know them very well. I know all three Tisch brothers.'Now, my father's name was Preston Robert and my uncle is Larry. So in one particular case, an individual thought that there were three Tisch brothers. He was going to call Preston, Robert or Larry. So I knew right away that he didn't know our family. "
+
+While some topics are more clear, others are not. Even in the clear topics, not all of the articles are accurately categorized. Further work is needed in this area.
 
 ## RShiny Application
 The most common word in this analysis is 'people'. I was interested in providing a way for readers to learn what CEOs say about people. In the following Shiny application, clicking the button will provide the reader with a random answer from a CEO that includes the word 'people'. These answers are taken from the corpus that attaches the date, headline, and URL to each response.
@@ -356,9 +392,11 @@ shinyApp(
 
 ## Acknowledgments
 
+* The New York Times for access to the API and all of the wonderful source material
 * http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/ for accessing NYT API
 * https://www.ranks.nl/stopwords for the stop word list
 * http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know for cleaning text in R and wordcloud fundamentals
 * https://www.tidytextmining.com/topicmodeling.html for most common terms, LDA, and most common documents by topic
 * https://adeelk93.github.io/collapsibleTree/ for a collapsible tree example
 * https://shiny.rstudio.com/articles/basics.html for RShiny basics
+* https://github.com/peridoteagle/markdown-cheatsheet for a template for this Markdown
