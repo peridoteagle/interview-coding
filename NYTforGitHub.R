@@ -25,6 +25,7 @@ startdate <- '20090701'
 enddate <- '20171025'
 #n is number of desired articles
 n <- 730
+#nover10 divides n by 10 and rounds up; for use in later for loop
 nover10 <- ceiling(n/10)
 
 urllist<-c()
@@ -209,6 +210,8 @@ docterm <- DocumentTermMatrix(docs)
 rowTotals <- apply(docterm , 1, sum) #Find the sum of words in each Document
 ttdm.new   <- docterm[rowTotals> 0, ] 
 
+#The following code helps select the number of topics for LDA
+#Note that it can take awhile to run
 result <- FindTopicsNumber(
   ttdm.new,
   topics = seq(from = 2, to = 62, by = 10),
@@ -243,7 +246,7 @@ cTree<-collapsibleTree(
   width = 500, height = 500, zoomable = FALSE, tooltip = TRUE
 )
 cTree
-saveWidget(cTree,file="ctree.html")
+saveWidget(cTree,file="ctreecorneroffice.html")
 
 #Seeing which documents are most closely related to a specific topic
 ap_documents <- tidy(ap_lda2, matrix = "gamma")
