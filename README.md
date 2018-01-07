@@ -287,6 +287,7 @@ head(d2, 10)
 wordcloud <- wordcloud2(d2)
 wordcloud
 ```
+![Alt text](https://user-images.githubusercontent.com/34693652/34654213-b0bf8728-f3c6-11e7-97fb-d549db1762a0.png)
 
 ## LDA and Visualization of Topics
 
@@ -347,6 +348,8 @@ saveWidget(cTree,file="ctreecorneroffice.html")
 * Topic 7 (school, college, money) may be about the importance of investing in education
 * Topic 27 (famili, work, front) may be about the relationship of family and work
 * Topic 33 (idea, meet, creativ) may be about coming up with creative ideas at meetings
+
+See all the topics here: file:///Users/emilyhadley/ctreecorneroffice.html
 
 ### Documents Related to a Specific Topic
 
