@@ -152,7 +152,7 @@ The following loop accomplishes these tasks:
 1. Extracts HTML file from every relevant URL
 2. Separates out bold text as a bold line represents a question while a non-bold line represents an answer
 3. Parses the HTML file
-4. Replaces specific symbols in the text from reading the html file
+4. Replaces specific symbols in the text from reading the HTML file
 5. Breaks into individual documents where each document is a question or answer by splitting on the bold lines; all question lines should start with BOLD ADAMBRYANT and end with BOLD
 
 After the loop, the code removes all statements by Adam Bryant (the reporter).
@@ -273,7 +273,7 @@ docs <- tm_map(docs, stemDocument)
 
 ## Term Frequency and Word Cloud
 
-This produces an interactive wordcloud of the most frequent words (not stemmed).
+This produces a word cloud of the most frequent words (not stemmed).
 
 ```
 #Term-document matrix for most frequent words NOT STEMMED:
@@ -323,7 +323,7 @@ chapter_topics <- tidy(ap_lda2, matrix = "beta")
 ap_lda2 <- LDA(ttdm.new, k = 40, control = list(seed = 1234))
 chapter_topics <- tidy(ap_lda2, matrix = "beta")
 
-#Finding the top terms per topic
+#Finding the top 3 terms per topic
 top_terms <- chapter_topics %>%
   group_by(topic) %>%
   top_n(3, beta) %>%
@@ -357,7 +357,7 @@ A screenshot is below. See all the topics here: https://peridoteagle.github.io/c
 To see the Top 2 documents related to each topic: 
 
 ```
-#Seeing which documents are most closely related to a specific topic
+#Seeing which 3 documents are most closely related to a specific topic
 ap_documents <- tidy(ap_lda2, matrix = "gamma")
 
 top_docs <- ap_documents %>%
