@@ -348,7 +348,7 @@ cTree
 * Topic 27 (famili, work, front) may be about the relationship of family and work
 * Topic 33 (idea, meet, creativ) may be about coming up with creative ideas at meetings
 
-A screenshot is below. See all the topics here: [linked phrase](file:///Users/emilyhadley/ctreecorneroffice.html)
+A screenshot is below. See all the topics here: [linked phrase](https://peridoteagle.github.io/ctreecorneroffice)
 
 ![Alt text](https://user-images.githubusercontent.com/34693652/34654324-3a9b508e-f3c8-11e7-8401-36dd2e418312.png)
 
@@ -437,7 +437,7 @@ server = function(input, output, session) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 ```
-A screenshot of the application is below. The full interactive application can be accessed here 
+A screenshot of the application is below. The full interactive application can be accessed here: https://peridoteagle.shinyapps.io/Attempt2/
 
 ![Alt text](https://user-images.githubusercontent.com/34693652/34654396-0677f09a-f3c9-11e7-87df-bb31004705a8.png)
 
