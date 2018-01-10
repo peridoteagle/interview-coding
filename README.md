@@ -54,7 +54,7 @@ Data for all articles were obtained from the NYT Search API. Note key limitation
 The key variables to obtain the articles:
 1. The key terms "corner office" and "adam bryant" were used to search the title, author, and text body. These terms can be modified, as shown in https://github.com/peridoteagle/fun-with-nyt-search-api
 2. The '20090701' and '20171025' are the start and end dates respectively for articles collected from the Corner Office column
-3. To get n, I used trial and error to determine that approximately 730 articles were returned with the search terms in from the 'keywords' variable
+3. To get n, I used trial and error to determine that approximately 730 articles were returned with the search terms from the 'keywords' variable
 
 ```
 #Obtaining articles from the NYT Search API
@@ -385,27 +385,57 @@ While some topics are more clear, others are not. Even in the clear topics, not 
 The most common word in this analysis is 'people'. I was interested in providing a way for readers to learn what CEOs say about people. In the following Shiny application, clicking the button will provide the reader with a random answer from a CEO that includes the word 'people'. These answers are taken from the corpus that attaches the date, headline, and URL to each response.
 
 ```
-shinyApp(
-  ui = fluidPage(
-    titlePanel("It's All About People"),
-    verbatimTextOutput("text1"),
-    actionButton("button1", "Show Me a Quote!"),
-    verbatimTextOutput("text2")),
-  
-  server = function(input, output, session) {
-    
-    output$text1 <- renderText({
-      session$userData$text1 <- "CEO Quotes that Include the Word 'People'"
-      session$userData$text1})
-    output$text2 <- renderText("Press the button to begin...")
-    
-    observeEvent(input$button1, {
-      llll<-as.character(sample(people,1))
-      llll <- str_replace_all(llll,"people","PEOPLE")
-      output$text2 <- renderText(llll[1])
-    })
-  }
+# R Shiny App
+
+#Selecting just the documents with people
+corp3 <- VCorpus(VectorSource(docswithheadlines))
+textVector3 <- sapply(corp3, as.character)
+people <- Corpus(VectorSource(textVector3[grep("people", textVector3)]))
+write.csv(people,"people.csv")
+
+#For the RShiny application to be hosted, you MUST have the csv file in the same directory as the applicaiton file
+
+#This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
+library(stringr)
+peoplecsv <- read.csv("people.csv")
+
+library(shiny)
+
+# Define UI
+ui = fluidPage(
+  titlePanel("It's All About People"),
+  verbatimTextOutput("text1"),
+  actionButton("button1", "Show Me a Quote!"),
+  textAreaInput("data",NULL,"Press the button to begin...",width = "1100px",height="450px"),
+  verbatimTextOutput("text3")
 )
+# Define server logic
+server = function(input, output, session) {
+  
+  output$text1 <- renderText({
+    session$userData$text1 <- "CEO Quotes that Include the Word 'People'"
+    session$userData$text1})
+  
+  output$text3 <- renderText({
+    session$userData$text1 <- "Text Source: New York Times"
+    session$userData$text1})
+  
+  observeEvent(input$button1, {
+    llll<-as.character(sample(peoplecsv$V1,1))
+    llll <- str_replace_all(llll,"people","PEOPLE")
+    updateTextAreaInput(session,"data",label=NULL,value=llll)
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
 ```
 A screenshot of the application is below. The full interactive application can be accessed here 
 

@@ -28,6 +28,7 @@ n <- 730
 #nover10 divides n by 10 and rounds up; for use in later for loop
 nover10 <- ceiling(n/10)
 
+#Getting article metadata from NYT Search API
 urllist<-c()
 urls <- c()
 headlabel <-c()
@@ -76,6 +77,7 @@ relevanturls <- as.character(relevantarticles$urls)
 relevantheads <- as.character(relevantarticles$headline)
 relevantdates <- as.character(relevantarticles$datepub)
 
+#Number of articles
 narticles <- length(relevanturls)
 
 #Defining function to parse URL for article body
@@ -268,32 +270,54 @@ newCorp1[[1349]]$content
 newCorp2[[1349]]$content
 
 ############################################################
-# Investigation into the most common word (people)
+# R Shiny App
 
 #Selecting just the documents with people
 corp3 <- VCorpus(VectorSource(docswithheadlines))
 textVector3 <- sapply(corp3, as.character)
 people <- Corpus(VectorSource(textVector3[grep("people", textVector3)]))
+write.csv(people,"people.csv")
 
-#Creating a R-Shiny app
-shinyApp(
-  ui = fluidPage(
-    titlePanel("It's All About People"),
-    verbatimTextOutput("text1"),
-    actionButton("button1", "Show Me a Quote!"),
-    verbatimTextOutput("text2")),
-  
-  server = function(input, output, session) {
-    
-    output$text1 <- renderText({
-      session$userData$text1 <- "CEO Quotes that Include the Word 'People'"
-      session$userData$text1})
-    output$text2 <- renderText("Press the button to begin...")
-    
-    observeEvent(input$button1, {
-      llll<-as.character(sample(people,1))
-      llll <- str_replace_all(llll,"people","PEOPLE")
-      output$text2 <- renderText(llll[1])
-    })
-  }
+#For the RShiny application to be hosted, you MUST have the csv file in the same directory as the applicaiton file
+
+#This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
+library(stringr)
+peoplecsv <- read.csv("people.csv")
+
+library(shiny)
+
+# Define UI for application that draws a histogram
+ui = fluidPage(
+  titlePanel("It's All About People"),
+  verbatimTextOutput("text1"),
+  actionButton("button1", "Show Me a Quote!"),
+  textAreaInput("data",NULL,"Press the button to begin...",width = "1100px",height="450px"),
+  verbatimTextOutput("text3")
 )
+# Define server logic required to draw a histogram
+server = function(input, output, session) {
+  
+  output$text1 <- renderText({
+    session$userData$text1 <- "CEO Quotes that Include the Word 'People'"
+    session$userData$text1})
+  
+  output$text3 <- renderText({
+    session$userData$text1 <- "Text Source: New York Times"
+    session$userData$text1})
+  
+  observeEvent(input$button1, {
+    llll<-as.character(sample(peoplecsv$V1,1))
+    llll <- str_replace_all(llll,"people","PEOPLE")
+    updateTextAreaInput(session,"data",label=NULL,value=llll)
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
