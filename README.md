@@ -348,7 +348,7 @@ cTree
 * Topic 27 (famili, work, front) may be about the relationship of family and work
 * Topic 33 (idea, meet, creativ) may be about coming up with creative ideas at meetings
 
-A screenshot is below. See all the topics here: [linked phrase](https://peridoteagle.github.io/ctreecorneroffice)
+A screenshot is below. See all the topics here: https://peridoteagle.github.io/ctreecorneroffice
 
 ![Alt text](https://user-images.githubusercontent.com/34693652/34654324-3a9b508e-f3c8-11e7-8401-36dd2e418312.png)
 
