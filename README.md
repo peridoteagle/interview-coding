@@ -132,7 +132,7 @@ narticles <- length(relevanturls)
 
 ### Parsing the Articles for Term Frequency and Topic Analysis
 
-First, define the function to parse the body of the article from the html files.
+First, define the function to parse the body of the article from the html files. Source for this code: http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/
 
 ```
 #Defining function to parse URL for article body
@@ -444,7 +444,7 @@ A screenshot of the application is below. The full interactive application can b
 ## Acknowledgments
 
 * The New York Times for access to the API and all of the wonderful source material
-* http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/ for accessing NYT API
+* http://brooksandrew.github.io/simpleblog/articles/new-york-times-api-to-mongodb/ for accessing NYT API and parsing the HTML
 * https://www.ranks.nl/stopwords for the stop word list
 * http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know for cleaning text in R and wordcloud fundamentals
 * https://www.tidytextmining.com/topicmodeling.html for most common terms, LDA, and most common documents by topic
