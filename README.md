@@ -341,7 +341,6 @@ cTree<-collapsibleTree(
   width = 500, height = 500, zoomable = FALSE, tooltip = TRUE
 )
 cTree
-saveWidget(cTree,file="ctreecorneroffice.html")
 ```
 
 40 topics were selected. There is some overlap between the topics. Three example topics include:

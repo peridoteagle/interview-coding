@@ -16,7 +16,7 @@ library(shiny)
 library(htmlwidgets)
 
 #Set the following NYT Key:
-Sys.setenv(NYTIMES_AS_KEY = "Your NYT API Key")
+Sys.setenv(NYTIMES_AS_KEY = "Your NYT API")
 
 #Obtaining articles from the NYT Search API
 #Search terms, start and end dates, and number of articles can be adjusted
@@ -245,7 +245,7 @@ cTree<-collapsibleTree(
   hierarchy = c("topic", "term"),
   width = 500, height = 500, zoomable = FALSE, tooltip = TRUE
 )
-cTree
+#cTree
 saveWidget(cTree,file="ctreecorneroffice.html")
 
 #Seeing which documents are most closely related to a specific topic
@@ -297,5 +297,3 @@ shinyApp(
     })
   }
 )
-
-
